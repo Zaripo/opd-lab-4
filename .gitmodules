@@ -1,0 +1,3 @@
+[submodule "ContentSharedAssets"]
+	path = ContentSharedAssets
+	url = https://github.com/nomercymason/opd-lab-4-shared-assets.git
