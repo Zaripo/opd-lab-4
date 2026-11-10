@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# 1. Проверка на запрещенные папки
+FORBIDDEN_DIRS="Saved Intermediate Binaries DerivedDataCache .vs"
+for dir in $FORBIDDEN_DIRS; do
+    if git diff --cached --name-only | grep -q "^$dir/"; then
+        echo "ОШИБКА: Попытка закоммитить файлы из запрещенной папки '$dir'."
+        echo "Убедитесь, что эти папки добавлены в .gitignore."
+        exit 1
+    fi
+done
+
+# 2. Проверка размера файлов и наличия LFS
+for file in $(git diff --cached --name-only); do
+    if [ -f "$file" ]; then
+        # Проверка размера (50 МБ = 52428800 байт)
+        filesize=$(wc -c < "$file")
+        if [ "$filesize" -gt 52428800 ]; then
+            # Проверяем, отслеживается ли файл через LFS
+            if ! git check-attr filter -- "$file" | grep -q "lfs"; then
+                echo "ОШИБКА: Файл '$file' превышает 50 МБ и не отслеживается через Git LFS."
+                echo "Добавьте его расширение в .gitattributes и выполните git lfs track."
+                exit 1
+            fi
+        fi
+    fi
+done
+
+echo "Pre-commit проверка пройдена успешно."
+exit 0
